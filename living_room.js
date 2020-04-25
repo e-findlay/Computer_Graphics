@@ -58,6 +58,8 @@ let xcoord = 0;
 let zcoord = 10;
 let u_LightColor;
 let u_LightPosition;
+let u_Sampler;
+let u_UseTextures;
 let textures = false;
 let stool_distance = 0;
 let stool_back = false;
@@ -98,7 +100,7 @@ function main() {
     u_LightColor = gl.getUniformLocation(gl.program, 'u_LightColor');
     u_LightPosition = gl.getUniformLocation(gl.program, 'u_LightPosition');
     let u_AmbientLight = gl.getUniformLocation(gl.program, 'u_AmbientLight');
-    let u_UseTextures = gl.getUniformLocation(gl.program, "u_UseTextures");
+    u_UseTextures = gl.getUniformLocation(gl.program, "u_UseTextures");
 
 	if (!u_ModelMatrix || !u_ViewMatrix || !u_NormalMatrix ||
 		!u_ProjMatrix || !u_LightColor || !u_LightPosition ||
@@ -422,7 +424,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_UseTextures) {
 	lightDirection.normalize();     // Normalize
 	gl.uniform3f(u_LightColor, 1.0, 1.0, 1.0);
 
-	let u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler');
+	u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler');
 	// Set the vertex coordinates and color (for the x, y axes)
 
 	var n = initAxesVertexBuffers(gl);
@@ -454,9 +456,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_UseTextures) {
 
 	gl.uniform3f(u_LightPosition, 11, 2, -9);
 
-	//drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n);
-	//drawStool(gl, u_ModelMatrix, u_NormalMatrix, n);
-	drawRoom(gl, u_ModelMatrix, u_NormalMatrix, n);
+	drawRoom(gl, u_ModelMatrix, u_NormalMatrix, n, textures);
 	pushMatrix(modelMatrix);
 	let n_tv = initVertexBuffers(gl, 15/255, 18/255, 16/255);
 	if (n_tv < 0) {
@@ -474,6 +474,11 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_UseTextures) {
 	}
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(0, -0.25, 5);
+	if (textures){
+		gl.uniform1i(u_UseTextures, 1);
+	}
+	gl.activeTexture(gl.TEXTURE5);
+	gl.uniform1i(u_Sampler, 5);
 	drawSofa(gl, u_ModelMatrix, u_NormalMatrix, n_sofa);
 	modelMatrix = popMatrix();
 	pushMatrix(modelMatrix);
@@ -486,6 +491,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_UseTextures) {
 	modelMatrix.rotate(270, 0, 1, 0);
 	drawArmChair(gl, u_ModelMatrix, u_NormalMatrix, n_sofa);
 	modelMatrix = popMatrix();
+	gl.uniform1i(u_UseTextures, 0);
 	let n_piano = initVertexBuffers(gl, 96/255, 75/255, 0/255);
 	if (n_piano < 0) {
 		console.log('Failed to set the vertex information');
@@ -494,7 +500,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_UseTextures) {
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(-11, 0.5, -9);
 	modelMatrix.rotate(90, 0, 1, 0);
-	drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n_piano);
+	drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n_piano, textures);
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(0,0.5,0 + stool_distance);
 	drawStool(gl, u_ModelMatrix, u_NormalMatrix, n_piano);
@@ -537,20 +543,20 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_UseTextures) {
 	  return;
 	}
 	modelMatrix.translate(-2, 0, -2);
-	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair);
+	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair, textures);
 	modelMatrix.translate(4,0,0);
-	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair);
+	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair, textures);
 	modelMatrix = popMatrix();
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(2,0,2);
 	modelMatrix.rotate(180, 0, 1, 0);
-	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair);
+	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair, textures);
 	modelMatrix = popMatrix();
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(-2,0,2);
 	modelMatrix.rotate(180, 0, 1, 0);
 	modelMatrix.rotate(20, 1,0,0);
-  	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair);
+  	drawChair(gl, u_ModelMatrix, u_NormalMatrix, n_chair, textures);
 	modelMatrix = popMatrix();
 	modelMatrix = popMatrix();
 	pushMatrix(modelMatrix);
@@ -583,7 +589,12 @@ function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
 	modelMatrix = popMatrix();
 }
 
-function drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n){
+function drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n, textures){
+	if (textures){
+		gl.uniform1i(u_UseTextures, 1);
+	}
+	gl.activeTexture(gl.TEXTURE4);
+	gl.uniform1i(u_Sampler, 4);
 	// Model the piano front
 	pushMatrix(modelMatrix);
 	modelMatrix.scale(5.0, 0.5, 2.0); // Scale
@@ -637,6 +648,9 @@ function drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n){
 	modelMatrix.scale(5.0, 0.5, 0.5); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
+
+	gl.uniform1i(u_UseTextures, 0);
+
 
 	let n_keys1 = initVertexBuffers(gl, 255/255, 255/255, 255/255);
 	if (n_keys1 < 0) {
@@ -732,6 +746,12 @@ function drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n){
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 
+	if (textures){
+		gl.uniform1i(u_UseTextures, 1);
+	}
+	gl.activeTexture(gl.TEXTURE4);
+	gl.uniform1i(u_Sampler, 4);
+
 	// Model piano legs
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(-2.375, -1.0, 0.75);
@@ -756,6 +776,8 @@ function drawPiano(gl, u_ModelMatrix, u_NormalMatrix, n){
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
 	modelMatrix = popMatrix();
+	gl.uniform1i(u_UseTextures, 0);
+
 
 }
 
@@ -875,13 +897,19 @@ function drawArmChair(gl, u_ModelMatrix, u_NormalMatrix, n){
 	modelMatrix = popMatrix();
 }
 
-function drawRoom(gl, u_ModelMatrix, u_NormalMatrix, n){
+function drawRoom(gl, u_ModelMatrix, u_NormalMatrix, n, textures){
 	// draw floor
+	if (textures){
+		gl.uniform1i(u_UseTextures, 1);
+	}
+	gl.activeTexture(gl.TEXTURE3);
+	gl.uniform1i(u_Sampler, 3);
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(0, -1, 0);
 	modelMatrix.scale(30, 0.125, 30);
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
+	gl.uniform1i(u_UseTextures, 0);
 	// draw wall 1
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(0,4,-15);
@@ -1019,7 +1047,12 @@ function drawTable(gl, u_ModelMatrix, u_NormalMatrix, n){
   
   }
 
-function drawChair(gl, u_ModelMatrix, u_NormalMatrix, n){
+function drawChair(gl, u_ModelMatrix, u_NormalMatrix, n, textures){
+	if (textures){
+		gl.uniform1i(u_UseTextures, 1);
+	}
+	gl.activeTexture(gl.TEXTURE2);
+	gl.uniform1i(u_Sampler, 2);
 	// Model the chair seat
 	pushMatrix(modelMatrix);
 		modelMatrix.scale(2.0, 0.5, 2.0); // Scale
@@ -1032,6 +1065,8 @@ function drawChair(gl, u_ModelMatrix, u_NormalMatrix, n){
 		modelMatrix.scale(2.0, 2.0, 0.5); // Scale
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
+
+	gl.uniform1i(u_UseTextures, 0);
 
 	// Model chair leg
 	pushMatrix(modelMatrix);
